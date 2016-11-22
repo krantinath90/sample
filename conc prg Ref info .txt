@@ -1,0 +1,124 @@
+
+ Resp :- USA - Pricing Superuser
+ 
+  req grp :- PAND QP Concurrent Programs
+
+
+-----------------------------------------------
+
+Panduit pricing FTP Program inbound  ( PANDUIT_PRICE_FTP_FILE )
+
+
+   para :-            FTP_Function  - get,  
+                      Source_dir_Path - $PANDUIT_TOP/data/pricing/inbound , 
+                      File_Name - 
+
+---------------------------------------------------
+
+
+ Req set :- Panduit Price List Generation ( PANDUIT_PRC_LST_GEN )
+
+         Panduit Price Generation Step1 ( PANDUIT_PRC_LST_SPIN1 )
+
+         Panduit Price Generation Step2 ( PANDUIT_PRC_LST_SPIN2 )
+
+         Panduit Price Generation Step3 ( PANDUIT_PRC_LST_SPIN3 )
+
+-------------------------------------------------------------------------------
+
+ Req set :- Panduit Price List Load and Spin ( PANDUIT_PRC_LOAD_SPIN )
+
+ 
+       PANDUIT: Price List - Step 1 - Load File ( PANDUIT_PRC_FTP_SPIN)
+
+              para :- FTP_Function  - get,  
+                      Unix_Path - in , 
+                      File_Name - PANDUIT_PRICE_FILE_EXTRACT.csv
+
+       PANDUIT: Price List - Step 2 - Process File ( PANDUIT_STEP_2_PROCESS_FILE )
+
+              para  :- GROUP PROCESS ID
+
+
+  Shell program :- Panduit non List File request set submit (PANDUIT_NONLIST_RSET_SUBMIT)
+  
+                    p_nonlst_ftp_fun    - get,  
+                   p_nonlst_unix_path - in
+ 
+==============================================================================
+
+ Sql loader :- Panduit PROS Price List Load ( PANDUIT_PRICELST_LOAD_STG )
+
+           para :-   DATA FILE PATH , DATA FILE NAME , CONTROL FILE NAME , ARCHIVE FILE PATH
+
+
+--------------------------
+
+      Panduit Create Non Price List File ( PANDUIT_PRC_NONLST_CR )
+            
+                 unix  top : $PANDUIT_TOP/in
+
+ ------------------------ 
+ Main Wrapper program :- 
+
+        Panduit Price List Generation process   ( PANDUIT_PRC_LIST_GEN_PROCESS )
+         
+		          ( panduit_price_gen_main_pkg.panduit_price_gen_process_prc)
+            
+    Old para values:- 
+                               
+               p_data_fl_path - $PANDUIT_TOP/data/pricing/inbound
+               p_data_fl_name - PRICEGEN*.csv
+                p_ctl_fl_name - $PANDUIT_TOP/bin/PANDUIT_PRCLST_LOAD_STG.ctl
+                p_arc_fl_path - $PANDUIT_TOP/data/pricing/archive
+				
+                p_nonlst_ftp_fun    - get,  
+                p_nonlst_unix_path - in
+
+	------
+
+     New para values:- 
+                               
+               p_data_fl_path - data/pricing/inbound
+               p_data_fl_name - PRICEGEN.csv
+                p_ctl_fl_name - $PANDUIT_TOP/bin/PANDUIT_PRCLST_LOAD_STG.ctl
+                p_arc_fl_path - data/pricing/archive
+				
+                p_nonlst_ftp_fun    - get,  
+                p_nonlst_unix_path - in
+			
+==========================================================
+
+
+
+				
+	chk req set :- 
+	
+	    Check req set submit     - ( REQ_SET_SUBMIT_CHK )
+		
+		proc -  chk_reqset_submit
+		
+		para - p_batch_no
+
+       ----------
+
+       Non  lst req set submit check - ( NONLSTREQ_SET_SUBMIT_CHK )
+
+             proc :-chk_submit_nonlst_reqset
+
+                 p_ftp_function        IN VARCHAR2 ,
+                  p_unix_path           IN VARCHAR2 ,
+                  p_file_name           IN VARCHAR2 ,
+                  p_grp_process_id      IN NUMBER 
+        
+
+============================================
+
+ FTP server :- Perm/Pricing - Updates       folder
+
+ftp -n $SERVER_NAME <<EOF
+      user "$USER_NAME" $PASSWORD
+
+ Server Name: 'enterprise.panduit.com'
+Username: 'panduit\ftp1'
+Password: 'panduit'
